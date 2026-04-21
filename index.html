@@ -164,7 +164,8 @@
     min-height: 250px;
   }
   .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; }
-  #simCanvasBefore { position: absolute; top: 0; left: 0; z-index: 0; }
+  .sim-canvas-wrapper { position: relative; }
+  #simCanvasBefore, #simCanvas { max-width: 100%; max-height: 100%; }
   #simCanvas { position: relative; z-index: 1; }
 
   .tint-label-overlay {
@@ -1301,8 +1302,16 @@ function renderSimulator() {
     beforeCanvas.width = canvas.width;
     beforeCanvas.height = canvas.height;
     beforeCanvas.style.display = 'block';
-    beforeCanvas.style.maxWidth = canvas.style.maxWidth || '100%';
-    beforeCanvas.style.maxHeight = canvas.style.maxHeight || '100%';
+    // Position the before canvas exactly behind the after canvas
+    beforeCanvas.style.position = 'absolute';
+    beforeCanvas.style.zIndex = '0';
+    // Match the rendered size of the after canvas
+    const afterRect = canvas.getBoundingClientRect();
+    const wrapperRect = document.getElementById('simCanvasWrapper').getBoundingClientRect();
+    beforeCanvas.style.left = (afterRect.left - wrapperRect.left) + 'px';
+    beforeCanvas.style.top = (afterRect.top - wrapperRect.top) + 'px';
+    beforeCanvas.style.width = afterRect.width + 'px';
+    beforeCanvas.style.height = afterRect.height + 'px';
     const bCtx = beforeCanvas.getContext('2d');
     bCtx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
     updateSliderPosition();
@@ -1533,17 +1542,21 @@ function downloadShareCard() {
   ctx.font = '12px Inter, system-ui, sans-serif';
   ctx.fillText('99% UV Rejection  •  Lifetime Warranty', specX, barY + 100);
 
-  // Download
+  // Download share card
   try {
-    const dataURL = card.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = dataURL;
-    a.download = 'tint-preview-' + veh.name.replace(/\s+/g, '-').toLowerCase() + '.png';
-    a.click();
+    card.toBlob(function(blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tint-preview-' + veh.name.replace(/\s+/g, '-').toLowerCase() + '.png';
+      a.target = '_top'; // Break out of iframe
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }, 'image/png');
   } catch(e) {
-    // Fallback for tainted canvas (cross-origin image)
-    const blob = card.toDataURL('image/png');
-    window.open(blob, '_blank');
+    alert('Unable to generate share card in this browser.');
   }
 }
 

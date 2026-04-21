@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Window Tint Simulator - The Trim Shop | Longview, TX</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --red: #CC1122;
+    --red-dark: #991118;
+    --gold: #D4A520;
+    --gold-light: #FFD54F;
+    --bg: #0f0f14;
+    --bg-card: #1a1a24;
+    --bg-panel: #15151e;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --text-muted: #888899;
+    --front-color: #00b8d4;
+    --rear-color: #ff9100;
+  }
+
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ============ HEADER ============ */
+  .site-header {
+    background: linear-gradient(135deg, #1a0a0a 0%, #0f0f14 50%, #0a0a14 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo-area { display: flex; align-items: center; gap: 12px; }
+  .logo-text h1 { font-size: 24px; font-weight: 800; color: var(--red); line-height: 1.1; }
+  .logo-text p { font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .header-right { margin-left: auto; text-align: right; }
+  .header-right .phone { font-size: 18px; font-weight: 700; color: var(--gold-light); }
+  .header-right .address { font-size: 12px; color: var(--text-muted); }
+
+  /* ============ DATA LOAD STATUS ============ */
+  .data-status {
+    padding: 12px 24px;
+    background: #1a1520;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .data-status button {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .data-status button:hover { background: var(--red-dark); }
+  .data-status .loaded { color: #4caf50; }
+
+  /* ============ MAIN LAYOUT ============ */
+  .main-content { display: flex; min-height: calc(100vh - 140px); }
+
+  /* ============ VEHICLE GRID VIEW ============ */
+  .vehicle-grid-view { flex: 1; padding: 24px; }
+  .vehicle-grid-view h2 { font-size: 18px; margin-bottom: 16px; color: var(--text); }
+
+  .category-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .category-tabs button {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .category-tabs button:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .category-tabs button.active { background: var(--red); color: white; }
+
+  .vehicle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .vehicle-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .vehicle-card:hover { border-color: var(--red); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(204, 17, 34, 0.15); }
+  .vehicle-card .thumb {
+    width: 100%;
+    background: #e8e8e8;
+    position: relative;
+    overflow: hidden;
+  }
+  .vehicle-card .thumb canvas { display: block; width: 100%; height: auto; }
+  .vehicle-card .info { padding: 12px; }
+  .vehicle-card .info h3 { font-size: 14px; font-weight: 600; }
+  .vehicle-card .info .cat { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ============ SIMULATOR VIEW ============ */
+  .simulator-view { display: none; flex: 1; }
+  .simulator-view.active { display: flex; }
+
+  .sim-preview {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+  }
+
+  .sim-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-bottom: 16px;
+    width: fit-content;
+    transition: all 0.2s;
+  }
+  .sim-back-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+  .sim-vehicle-name { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+
+  .sim-canvas-wrapper {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+  }
+  .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; }
+
+  .tint-label-overlay {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    gap: 12px;
+  }
+  .tint-label {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+  }
+  .tint-label.front { background: rgba(0, 184, 212, 0.2); color: var(--front-color); border: 1px solid rgba(0, 184, 212, 0.3); }
+  .tint-label.rear { background: rgba(255, 145, 0, 0.2); color: var(--rear-color); border: 1px solid rgba(255, 145, 0, 0.3); }
+
+  /* ============ CONTROLS PANEL ============ */
+  .sim-controls {
+    width: 340px;
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  .control-section { margin-bottom: 24px; }
+  .control-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .brand-selector { display: flex; gap: 8px; }
+  .brand-btn {
+    flex: 1;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .brand-btn:hover { border-color: var(--text-muted); }
+  .brand-btn.active { border-color: var(--red); background: rgba(204, 17, 34, 0.1); }
+  .brand-btn .name { font-size: 13px; font-weight: 700; display: block; }
+  .brand-btn .desc { font-size: 10px; color: var(--text-muted); display: block; margin-top: 2px; }
+
+  .tint-zone-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .tint-zone-header .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .tint-zone-header .dot.front { background: var(--front-color); }
+  .tint-zone-header .dot.rear { background: var(--rear-color); }
+  .tint-zone-header h4 { font-size: 13px; font-weight: 600; }
+
+  .vlt-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .vlt-btn {
+    padding: 10px 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .vlt-btn:hover { border-color: var(--text-muted); }
+  .vlt-btn.active.front { border-color: var(--front-color); background: rgba(0, 184, 212, 0.1); color: var(--front-color); }
+  .vlt-btn.active.rear { border-color: var(--rear-color); background: rgba(255, 145, 0, 0.1); color: var(--rear-color); }
+  .vlt-btn .swatch {
+    display: block;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 4px;
+  }
+  .vlt-btn .label { font-size: 10px; color: var(--text-muted); display: block; margin-top: 2px; }
+  .vlt-btn.none-btn { font-size: 11px; color: var(--text-muted); }
+  .vlt-btn.none-btn.active.front, .vlt-btn.none-btn.active.rear { color: var(--text); }
+
+  /* Specs */
+  .specs-table {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+  }
+  .specs-table td {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .specs-table td:first-child { color: var(--text-muted); }
+  .specs-table td:last-child { text-align: right; font-weight: 600; }
+
+  .specs-note {
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(212, 165, 32, 0.08);
+    border: 1px solid rgba(212, 165, 32, 0.2);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--gold);
+    line-height: 1.4;
+  }
+
+  /* Legal info */
+  .legal-info {
+    padding: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .legal-info strong { color: var(--text); }
+
+  /* ============ FOOTER ============ */
+  .site-footer {
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    padding: 20px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .site-footer a { color: var(--gold); text-decoration: none; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 768px) {
+    .simulator-view.active { flex-direction: column; }
+    .sim-controls { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+    .vehicle-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    .site-header { flex-direction: column; text-align: center; }
+    .header-right { margin-left: 0; text-align: center; }
+  }
+
+  /* ============ EMPTY STATE ============ */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+  .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 13px; line-height: 1.5; max-width: 400px; margin: 0 auto; }
+  .empty-state button {
+    margin-top: 16px;
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .empty-state button:hover { background: var(--red-dark); }
+
+  /* ============ LEGAL WARNING ============ */
+  .legal-warning {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: rgba(255, 60, 60, 0.1);
+    border: 1px solid rgba(255, 60, 60, 0.3);
+    border-radius: 6px;
+    font-size: 11px;
+    color: #ff6b6b;
+    line-height: 1.4;
+  }
+
+  /* ============ EMBED MODE ============ */
+  body.embed-mode .site-header { display: none; }
+  body.embed-mode .data-status { display: none; }
+  body.embed-mode .site-footer { display: none; }
+  body.embed-mode .main-content { min-height: 100vh; }
+
+  /* ============ BEFORE/AFTER SLIDER ============ */
+  .ba-slider-container {
+    position: absolute;
+    inset: 0;
+    cursor: ew-resize;
+    z-index: 5;
+    display: none;
+  }
+  .ba-slider-container.active { display: block; }
+  .ba-slider-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: white;
+    box-shadow: 0 0 6px rgba(0,0,0,0.5);
+    pointer-events: none;
+    z-index: 6;
+  }
+  .ba-slider-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #333;
+    pointer-events: none;
+    z-index: 7;
+  }
+  .ba-label {
+    position: absolute;
+    top: 8px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+    z-index: 6;
+  }
+  .ba-label.before { left: 8px; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
+  .ba-label.after { right: 8px; background: rgba(204,17,34,0.2); color: var(--red); }
+
+  /* ============ SHARE CARD BUTTON ============ */
+  .share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 12px;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .share-btn:hover { background: var(--red-dark); }
+
+  /* ============ BEFORE/AFTER TOGGLE ============ */
+  .ba-toggle {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+  .ba-toggle.visible { display: flex; }
+  .ba-toggle label { font-size: 12px; color: var(--text-muted); cursor: pointer; }
+  .ba-toggle input { cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="logo-area">
+    <div class="logo-text">
+      <h1>The Trim Shop</h1>
+      <p>Window Tint Specialist Since 1979</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="phone">(903) 757-3846</div>
+    <div class="address">Longview, TX</div>
+  </div>
+</header>
+
+<!-- Data Status -->
+<div class="data-status" id="dataStatus">
+  <span id="dataStatusText">16 vehicles ready — load your vehicle image to get started.</span>
+  <input type="file" id="vehicleImageInput" accept="image/*" onchange="loadVehicleImage(event)" style="display:none;">
+  <button onclick="document.getElementById('vehicleImageInput').click()">Load Vehicle Image</button>
+  <input type="file" id="jsonFileInput" accept=".json,application/json" onchange="loadJSONFile(event)" style="display:none;">
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <!-- Vehicle Grid View -->
+  <div class="vehicle-grid-view" id="gridView">
+    <div class="category-tabs" id="categoryTabs">
+      <button class="active" data-cat="all" onclick="filterCategory('all')">All Vehicles</button>
+      <button data-cat="sedan" onclick="filterCategory('sedan')">Sedans</button>
+      <button data-cat="suv" onclick="filterCategory('suv')">SUVs</button>
+      <button data-cat="truck" onclick="filterCategory('truck')">Trucks</button>
+      <button data-cat="specialty" onclick="filterCategory('specialty')">Specialty</button>
+    </div>
+
+    <div id="vehicleGridContainer">
+      <div class="empty-state">
+        <div class="icon">🖼</div>
+        <h3>Load Your Vehicle Image</h3>
+        <p>Click the button below to load your vehicle sprite sheet image, then browse and customize tint on any vehicle.</p>
+        <button onclick="document.getElementById('vehicleImageInput').click()">Load Vehicle Image</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulator View -->
+  <div class="simulator-view" id="simView">
+    <div class="sim-preview">
+      <button class="sim-back-btn" onclick="showGrid()">← Back to Vehicles</button>
+      <div class="sim-vehicle-name" id="simVehicleName"></div>
+      <div class="sim-canvas-wrapper" id="simCanvasWrapper">
+        <canvas id="simCanvas"></canvas>
+        <!-- Before/After Slider -->
+        <div class="ba-slider-container" id="baSlider">
+          <div class="ba-label before">Before</div>
+          <div class="ba-label after">Tinted</div>
+          <div class="ba-slider-line" id="baLine"></div>
+          <div class="ba-slider-handle" id="baHandle">&#x2194;</div>
+        </div>
+        <div class="tint-label-overlay">
+          <div class="tint-label front" id="frontTintLabel">Front: None</div>
+          <div class="tint-label rear" id="rearTintLabel">Rear: None</div>
+        </div>
+      </div>
+    </div>
+    <div class="sim-controls">
+      <!-- Brand Selector -->
+      <div class="control-section">
+        <h3>Tint Brand</h3>
+        <div class="brand-selector">
+          <button class="brand-btn active" data-brand="blackfx3" onclick="setBrand('blackfx3')">
+            <span class="name">Black FX3</span>
+            <span class="desc">Ceramic Film</span>
+          </button>
+          <button class="brand-btn" data-brand="carbonfx" onclick="setBrand('carbonfx')">
+            <span class="name">Carbon FX</span>
+            <span class="desc">Color-Stable</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Front Windows -->
+      <div class="control-section">
+        <div class="tint-zone-header">
+          <span class="dot front"></span>
+          <h4>Front Windows</h4>
+        </div>
+        <div class="vlt-grid" id="frontVLTGrid"></div>
+        <div class="legal-warning" id="legalWarning" style="display:none;">
+          &#x26A0; Below Texas legal limit (25% VLT min for front windows). Medical exemption required.
+        </div>
+      </div>
+
+      <!-- Rear Windows -->
+      <div class="control-section">
+        <div class="tint-zone-header">
+          <span class="dot rear"></span>
+          <h4>Rear Windows</h4>
+        </div>
+        <div class="vlt-grid" id="rearVLTGrid"></div>
+      </div>
+
+      <!-- Specs -->
+      <div class="control-section">
+        <h3>Selected Tint Specs</h3>
+        <table class="specs-table" id="specsTable">
+          <tr><td>Brand</td><td id="specBrand">-</td></tr>
+          <tr><td>Front VLT</td><td id="specFrontVLT">-</td></tr>
+          <tr><td>Rear VLT</td><td id="specRearVLT">-</td></tr>
+          <tr><td>UV Rejection</td><td id="specUV">-</td></tr>
+          <tr><td>IR Rejection</td><td id="specIR">-</td></tr>
+          <tr><td>Total Solar Energy Rej.</td><td id="specTSER">-</td></tr>
+        </table>
+        <div class="specs-note">
+          All SolarFX films block 99% of harmful UV A/B rays and come with a premium lifetime warranty.
+        </div>
+      </div>
+
+      <!-- Before/After Toggle -->
+      <div class="control-section">
+        <div class="ba-toggle" id="baToggle">
+          <input type="checkbox" id="baCheckbox" onchange="toggleBeforeAfter(this.checked)">
+          <label for="baCheckbox">Before / After Comparison</label>
+        </div>
+      </div>
+
+      <!-- Share Card -->
+      <div class="control-section">
+        <button class="share-btn" onclick="downloadShareCard()">
+          &#x1F4F7; Download Share Card
+        </button>
+      </div>
+
+      <!-- Texas Legal Info -->
+      <div class="control-section">
+        <h3>Texas Tint Laws</h3>
+        <div class="legal-info">
+          <strong>Windshield:</strong> 25% VLT above AS-1 line (top 5")<br>
+          <strong>Front side windows:</strong> 25% VLT minimum<br>
+          <strong>Rear side windows:</strong> Any darkness<br>
+          <strong>Rear window:</strong> Any darkness (with side mirrors)<br>
+          <strong>Reflectivity:</strong> Max 25% on all windows<br><br>
+          <em>Medical exemptions available with physician's letter. The Trim Shop can help you choose the right tint that looks great and stays legal.</em>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="site-footer">
+  The Trim Shop — Window Tint Specialist Since 1979 — Longview, TX<br>
+  <a href="tel:9037573846">(903) 757-3846</a>
+</footer>
+
+
+<script>
+// ============ TINT DATA ============
+const TINT_DATA = {
+  blackfx3: {
+    name: 'Black FX3 Series',
+    type: 'Ceramic Film',
+    color: [10, 12, 20],     // Cool blue-black (ceramic nano-particle cast)
+    shades: [
+      { vlt: 5,  tser: 66, uv: 99, ir: 79 },
+      { vlt: 15, tser: 64, uv: 99, ir: 79 },
+      { vlt: 20, tser: 61, uv: 99, ir: 79 },
+      { vlt: 30, tser: 57, uv: 99, ir: 79 },
+      { vlt: 35, tser: 56, uv: 99, ir: 79 },
+      { vlt: 42, tser: 54, uv: 99, ir: 79 },
+      { vlt: 45, tser: 52, uv: 99, ir: 79 },
+      { vlt: 55, tser: 50, uv: 99, ir: 79 },
+      { vlt: 65, tser: 49, uv: 99, ir: 86 },
+    ]
+  },
+  carbonfx: {
+    name: 'Carbon FX Series',
+    type: 'Color-Stable Film',
+    color: [14, 12, 10],     // Flat neutral-warm charcoal (dyed carbon, matte)
+    shades: [
+      { vlt: 5,  tser: 42, uv: 99, ir: 0 },
+      { vlt: 15, tser: 41, uv: 99, ir: 0 },
+      { vlt: 20, tser: 40, uv: 99, ir: 0 },
+      { vlt: 30, tser: 37, uv: 99, ir: 0 },
+      { vlt: 35, tser: 37, uv: 99, ir: 0 },
+      { vlt: 43, tser: 33, uv: 99, ir: 0 },
+      { vlt: 50, tser: 30, uv: 99, ir: 0 },
+    ]
+  }
+};
+
+const VLT_NAMES = {
+  5: 'Limo',
+  15: 'Dark',
+  20: 'Medium Dark',
+  30: 'Medium',
+  35: 'Medium Light',
+  42: 'Light',
+  43: 'Light',
+  45: 'Light',
+  50: 'Light',
+  55: 'Very Light',
+  65: 'Ultra Light',
+};
+
+// ============ EMBEDDED VEHICLE DATA (double-refined edge-snapped polygons) ============
+const DEFAULT_VEHICLE_DATA = {
+  imageFile: "Car images.png",
+  vehicles: [
+    {id:"vehicle-1",name:"Toyota Camry",category:"sedan",bounds:{x:15,y:54,width:702,height:279},windows:[{type:"front",points:[[251,84],[261,78],[270,73],[280,68],[290,64],[304,59],[312,57],[321,55],[332,53],[343,52],[354,51],[365,50],[363,58],[361,67],[359,75],[357,84],[355,92],[354,100],[342,101],[329,102],[317,103],[306,103],[293,104],[281,105],[270,105],[258,105],[257,95]]},{type:"rear",points:[[382,49],[394,50],[405,50],[416,51],[428,52],[438,53],[448,55],[458,58],[467,63],[476,69],[486,76],[486,88],[479,90],[471,92],[457,95],[447,96],[437,96],[428,97],[418,97],[408,98],[398,98],[388,99],[378,99],[379,88],[380,76],[381,63]]}]},
+    {id:"vehicle-2",name:"Lexus ES",category:"sedan",bounds:{x:723,y:57,width:670,height:277},windows:[{type:"front",points:[[255,80],[262,73],[272,67],[283,61],[294,56],[305,52],[317,49],[329,47],[341,46],[350,45],[359,45],[357,58],[354,70],[352,81],[350,93],[339,93],[328,94],[318,94],[307,95],[295,96],[284,97],[274,97],[263,98],[262,85],[259,82]]},{type:"rear",points:[[378,45],[393,45],[407,46],[414,46],[422,47],[431,48],[440,50],[450,52],[460,54],[463,63],[467,72],[467,81],[467,90],[455,90],[444,90],[432,90],[420,90],[408,91],[397,91],[386,91],[374,92],[375,80],[376,67],[377,56]]},{type:"rear",points:[[470,56],[478,58],[488,61],[497,64],[507,68],[520,74],[526,80],[518,85],[508,89],[498,90],[488,90],[484,81],[480,73],[475,65]]}]},
+    {id:"vehicle-3",name:"Honda Civic",category:"sedan",bounds:{x:1406,y:61,width:736,height:271},windows:[{type:"front",points:[[273,64],[285,58],[296,53],[307,49],[319,45],[328,43],[337,41],[348,39],[358,38],[366,37],[373,37],[388,37],[385,47],[383,58],[381,66],[380,73],[378,82],[377,92],[366,92],[354,93],[342,94],[331,94],[320,95],[308,96],[296,97],[285,98],[282,90],[278,79],[272,78]]},{type:"rear",points:[[405,36],[413,36],[422,37],[431,37],[440,38],[448,38],[456,39],[470,41],[483,44],[481,58],[481,67],[480,76],[478,86],[469,86],[460,87],[450,88],[440,88],[431,89],[422,89],[412,90],[402,90],[403,77],[404,64],[405,50]]},{type:"rear",points:[[485,45],[494,48],[502,52],[511,56],[520,61],[517,72],[518,83],[508,84],[498,85],[488,85],[478,86],[480,76],[481,67],[482,58]]},{type:"front",points:[[271,78],[269,66],[259,72],[251,82],[249,90],[250,98],[260,100],[261,99],[261,92],[261,86]]}]},
+    {id:"vehicle-4",name:"Nissan Altima",category:"sedan",bounds:{x:2146,y:61,width:653,height:277},windows:[{type:"front",points:[[253,78],[260,74],[267,70],[275,65],[283,61],[291,58],[299,55],[307,53],[316,51],[327,49],[338,48],[346,47],[354,47],[352,59],[349,71],[347,82],[346,93],[336,93],[325,94],[315,94],[305,95],[295,95],[285,96],[275,96],[265,97],[267,89],[267,81]]},{type:"rear",points:[[374,47],[386,47],[398,48],[410,49],[421,50],[429,51],[438,53],[447,55],[456,58],[452,66],[450,75],[452,89],[442,89],[431,89],[420,90],[410,90],[400,90],[389,91],[379,91],[368,91],[370,79],[371,67],[371,57]]},{type:"rear",points:[[459,59],[466,61],[474,64],[486,69],[488,77],[477,83],[465,88],[452,89],[450,75],[452,66],[456,58]]}]},
+    {id:"vehicle-5",name:"Toyota RAV4",category:"suv",bounds:{x:19,y:430,width:674,height:290},windows:[{type:"front",points:[[263,81],[273,75],[283,69],[293,64],[303,59],[315,55],[327,52],[336,51],[346,50],[355,49],[364,49],[362,58],[360,68],[359,76],[357,84],[356,92],[355,102],[346,102],[336,103],[326,104],[317,104],[307,105],[297,106],[288,106],[278,107],[274,96],[272,87]]},{type:"rear",points:[[385,47],[395,47],[405,47],[415,47],[425,47],[436,47],[446,47],[456,47],[466,48],[476,48],[486,48],[499,54],[509,60],[515,65],[522,70],[529,75],[530,82],[525,89],[516,91],[507,92],[499,93],[491,93],[480,93],[469,94],[458,95],[446,96],[435,96],[423,97],[412,98],[401,99],[390,99],[378,100],[380,90],[382,80],[383,66],[384,57]]}]},
+    {id:"vehicle-6",name:"Toyota Highlander",category:"suv",bounds:{x:719,y:430,width:674,height:294},windows:[{type:"front",points:[[248,68],[253,61],[260,56],[267,51],[275,46],[283,41],[291,38],[302,35],[313,33],[320,32],[328,34],[342,30],[341,40],[341,49],[340,59],[339,69],[338,78],[338,87],[328,87],[317,88],[307,88],[297,89],[286,89],[276,89],[266,89],[255,90],[252,79],[251,70]]},{type:"rear",points:[[373,30],[385,29],[397,29],[410,29],[422,29],[434,29],[446,30],[448,39],[452,49],[455,57],[458,65],[461,73],[466,81],[457,83],[448,84],[438,84],[428,84],[418,86],[408,86],[398,86],[388,85],[378,85],[368,85],[369,77],[368,68],[368,59],[367,50],[367,40],[367,30]]},{type:"rear",points:[[492,30],[503,30],[514,30],[526,31],[537,31],[548,31],[560,32],[572,32],[584,33],[588,42],[591,50],[595,57],[599,65],[603,73],[607,81],[598,81],[589,81],[580,81],[570,81],[561,81],[551,80],[541,80],[532,80],[522,74],[516,67],[511,61],[506,55],[501,49],[494,41]]}]},
+    {id:"vehicle-7",name:"Ford Explorer",category:"suv",bounds:{x:1410,y:430,width:691,height:294},windows:[{type:"front",points:[[275,83],[285,77],[295,70],[303,65],[313,59],[324,53],[332,45],[345,44],[357,44],[369,44],[381,44],[378,54],[377,64],[376,72],[375,80],[374,88],[373,97],[363,98],[352,99],[342,99],[331,100],[321,100],[310,101],[299,101],[289,102],[288,92],[290,84],[281,81]]},{type:"rear",points:[[397,44],[410,44],[423,44],[436,44],[449,45],[461,45],[473,47],[481,56],[488,65],[494,73],[500,81],[494,93],[482,93],[470,94],[458,94],[446,95],[433,95],[421,96],[409,96],[397,97],[398,87],[398,78],[398,64],[398,54]]},{type:"rear",points:[[509,52],[519,50],[529,50],[539,50],[549,51],[559,51],[568,51],[578,51],[588,52],[596,62],[604,72],[610,82],[617,90],[607,90],[598,90],[588,90],[578,91],[569,91],[560,90],[550,84],[542,78],[533,71],[524,64],[516,58]]}]},
+    {id:"vehicle-8",name:"Chevrolet Tahoe",category:"suv",bounds:{x:2129,y:426,width:666,height:297},windows:[{type:"front",points:[[270,79],[278,72],[287,66],[297,60],[306,56],[316,53],[326,51],[336,50],[347,48],[357,48],[367,47],[365,57],[363,67],[362,75],[361,82],[360,90],[358,98],[348,98],[338,99],[328,99],[317,100],[307,101],[297,101],[286,102],[276,102],[274,92],[273,82]]},{type:"rear",points:[[388,46],[399,46],[410,46],[422,46],[434,46],[445,47],[457,48],[459,60],[462,70],[462,81],[462,93],[452,94],[442,94],[432,95],[422,95],[412,95],[402,96],[392,96],[382,96],[383,84],[384,72],[384,59]]},{type:"rear",points:[[466,48],[475,48],[485,49],[494,50],[503,50],[513,51],[523,53],[530,56],[536,61],[543,67],[549,74],[555,82],[559,90],[551,91],[542,91],[532,92],[522,92],[513,92],[503,92],[493,93],[484,93],[479,80],[474,70],[470,60]]}]},
+    {id:"vehicle-9",name:"Toyota Tacoma",category:"truck",bounds:{x:13,y:837,width:693,height:282},windows:[{type:"front",points:[[233,82],[243,74],[253,67],[265,60],[275,53],[287,51],[298,51],[309,50],[320,50],[319,63],[317,76],[315,88],[315,101],[304,101],[293,101],[282,102],[271,102],[260,102],[249,103],[247,93],[245,83]]},{type:"rear",points:[[348,50],[360,50],[371,50],[383,50],[394,50],[406,50],[417,51],[419,61],[420,70],[421,79],[421,87],[408,94],[401,96],[393,98],[385,98],[376,98],[367,99],[358,99],[349,99],[340,99],[341,86],[340,75],[342,62],[342,50]]}]},
+    {id:"vehicle-10",name:"RAM 1500",category:"truck",bounds:{x:713,y:835,width:700,height:284},windows:[{type:"front",points:[[228,85],[233,78],[240,73],[248,68],[255,64],[262,60],[270,56],[279,53],[287,51],[295,50],[304,49],[319,49],[318,58],[317,67],[317,75],[316,83],[315,93],[313,102],[303,103],[294,103],[284,104],[274,104],[265,104],[255,105],[246,105],[236,105],[232,94]]},{type:"rear",points:[[345,48],[357,48],[369,48],[381,48],[393,48],[404,48],[415,48],[414,59],[415,70],[415,82],[418,94],[409,97],[399,99],[390,100],[381,100],[371,101],[362,101],[352,101],[343,101],[344,88],[344,74],[343,61]]}]},
+    {id:"vehicle-11",name:"Chevrolet Silverado",category:"truck",bounds:{x:1423,y:835,width:693,height:286},windows:[{type:"front",points:[[237,79],[245,73],[252,68],[260,63],[269,58],[278,55],[287,53],[297,52],[307,51],[316,51],[326,50],[324,60],[323,69],[322,77],[321,85],[320,94],[317,104],[307,104],[297,105],[287,105],[276,105],[265,105],[255,105],[250,94],[248,83]]},{type:"rear",points:[[343,50],[353,49],[363,49],[373,49],[382,49],[391,49],[401,49],[411,50],[421,51],[425,58],[427,66],[428,73],[429,81],[429,96],[423,101],[413,102],[403,102],[394,102],[384,102],[374,103],[364,103],[355,103],[345,103],[343,92],[344,78],[343,64]]}]},
+    {id:"vehicle-12",name:"Ford F-150",category:"truck",bounds:{x:2129,y:833,width:674,height:292},windows:[{type:"front",points:[[222,94],[230,85],[240,78],[250,72],[261,66],[269,63],[277,61],[285,60],[293,59],[308,59],[306,72],[305,84],[304,96],[304,108],[294,108],[284,109],[275,109],[265,109],[255,110],[246,110],[237,110],[227,111],[223,102]]},{type:"rear",points:[[332,57],[344,57],[356,57],[368,57],[380,57],[392,58],[404,60],[405,70],[406,80],[406,89],[404,99],[394,102],[384,105],[376,105],[368,106],[359,106],[351,106],[343,106],[334,107],[333,94],[333,82],[332,70]]}]},
+    {id:"vehicle-13",name:"GMC Yukon",category:"specialty",bounds:{x:6,y:1234,width:717,height:277},windows:[{type:"front",points:[[240,86],[246,81],[253,76],[260,71],[267,67],[275,62],[282,56],[294,55],[308,54],[317,54],[327,54],[327,64],[326,73],[325,80],[324,88],[323,97],[321,107],[310,107],[299,107],[288,108],[277,108],[266,108],[255,108],[254,98],[253,88]]},{type:"rear",points:[[351,53],[361,53],[370,53],[380,53],[390,53],[400,53],[409,53],[418,53],[428,55],[430,65],[431,74],[432,83],[432,93],[421,98],[408,102],[399,103],[389,104],[379,105],[369,105],[360,105],[350,106],[350,96],[349,88],[349,79],[349,71],[349,62]]}]},
+    {id:"vehicle-14",name:"Honda Odyssey",category:"specialty",bounds:{x:725,y:1232,width:691,height:279},windows:[{type:"front",points:[[199,99],[209,93],[219,87],[228,82],[238,77],[248,72],[258,68],[266,65],[274,62],[282,60],[290,58],[299,56],[308,55],[320,54],[334,53],[332,63],[331,73],[325,83],[324,92],[323,101],[326,111],[315,112],[304,113],[293,114],[282,115],[270,116],[259,117],[248,120],[236,122],[234,113],[232,104],[221,103],[211,107]]},{type:"rear",points:[[360,52],[370,51],[381,51],[391,51],[401,51],[412,51],[422,51],[432,51],[441,51],[451,51],[462,52],[460,60],[460,67],[460,80],[461,89],[460,96],[459,107],[451,106],[443,106],[434,105],[425,105],[414,105],[402,106],[390,107],[379,107],[367,108],[355,109],[355,98],[356,87],[356,80],[357,72],[357,62]]},{type:"rear",points:[[477,53],[487,53],[497,54],[507,55],[517,56],[526,57],[535,58],[546,62],[556,66],[565,71],[574,76],[582,81],[590,86],[594,94],[598,105],[586,106],[575,106],[564,107],[554,107],[543,108],[532,108],[521,108],[510,109],[499,109],[488,110],[485,101],[484,91],[482,81],[480,72],[478,62]]}]},
+    {id:"vehicle-15",name:"Tesla Model 3",category:"specialty",bounds:{x:1421,y:1232,width:702,height:282},windows:[{type:"rear",points:[[447,93],[457,91],[466,93],[474,95],[483,98],[491,100],[500,103],[496,113],[489,119],[479,121],[469,122],[461,122],[452,123],[442,124],[432,125],[432,115],[435,106],[439,99]]},{type:"front",points:[[302,114],[308,107],[315,99],[323,95],[330,92],[338,89],[346,87],[358,84],[370,83],[382,86],[395,86],[406,83],[417,84],[430,86],[442,88],[438,97],[435,106],[432,115],[430,125],[419,125],[407,126],[395,126],[383,126],[371,127],[359,127],[347,128],[336,128],[323,128],[311,129],[311,121],[307,114]]}]},
+    {id:"vehicle-16",name:"Tesla Model Y",category:"specialty",bounds:{x:2133,y:1232,width:663,height:282},windows:[{type:"front",points:[[256,99],[267,92],[278,86],[289,80],[301,78],[310,72],[319,69],[331,66],[343,64],[353,63],[363,62],[374,61],[385,61],[381,70],[378,81],[375,91],[373,100],[371,109],[370,119],[357,120],[345,121],[333,122],[321,122],[308,123],[295,124],[283,125],[271,125],[267,115],[262,107]]},{type:"rear",points:[[407,62],[417,62],[427,63],[438,64],[450,66],[461,67],[472,69],[482,71],[493,73],[505,76],[518,80],[530,84],[542,88],[537,96],[530,100],[523,103],[514,106],[502,109],[488,111],[476,112],[464,113],[451,114],[439,115],[427,116],[414,117],[402,117],[389,118],[391,108],[392,97],[393,88],[395,74],[396,61]]}]}
+  ]
+};
+
+// ============ APP STATE ============
+let appState = {
+  vehicles: [],
+  vehicleImage: null,
+  selectedVehicle: null,
+  currentBrand: 'blackfx3',
+  frontVLT: null,    // null = no tint
+  rearVLT: null,
+  activeCategory: 'all',
+};
+
+// ============ DATA LOADING ============
+function loadJSONFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      loadVehicleData(data);
+    } catch(err) {
+      alert('Invalid JSON file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+function loadVehicleData(data) {
+  if (!data.vehicles || !Array.isArray(data.vehicles)) {
+    alert('Invalid data format. Expected { vehicles: [...] }');
+    return;
+  }
+  appState.vehicles = data.vehicles;
+  document.getElementById('dataStatusText').innerHTML = '<span class="loaded">✓</span> ' + data.vehicles.length + ' vehicles loaded';
+  buildVehicleGrid();
+}
+
+function loadVehicleImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      appState.vehicleImage = img;
+      try {
+        localStorage.setItem('trimshop-sim-image', ev.target.result);
+      } catch(err) {
+        // Image too large for localStorage — that's fine, just skip caching
+        console.warn('Image too large to cache in localStorage, skipping.');
+      }
+      document.getElementById('dataStatusText').innerHTML = '<span class="loaded">✓</span> ' + appState.vehicles.length + ' vehicles ready — Select a vehicle below to customize tint';
+      buildVehicleGrid();
+      if (appState.selectedVehicle) renderSimulator();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============ AUTO-LOAD ============
+function autoLoad() {
+  // Always use embedded data — clear any stale localStorage data
+  localStorage.removeItem('trimshop-sim-data');
+  appState.vehicles = DEFAULT_VEHICLE_DATA.vehicles;
+  document.getElementById('dataStatusText').innerHTML = '<span class="loaded">✓</span> ' + appState.vehicles.length + ' vehicles ready — load your vehicle image to get started';
+
+  const savedImage = localStorage.getItem('trimshop-sim-image');
+  if (savedImage) {
+    const img = new Image();
+    img.onload = () => {
+      appState.vehicleImage = img;
+      document.getElementById('dataStatusText').innerHTML = '<span class="loaded">✓</span> ' + appState.vehicles.length + ' vehicles ready — Select a vehicle below to customize tint';
+      buildVehicleGrid();
+    };
+    img.onerror = () => {
+      localStorage.removeItem('trimshop-sim-image');
+      buildVehicleGrid();
+    };
+    img.src = savedImage;
+  }
+  buildVehicleGrid();
+}
+
+// ============ VEHICLE GRID ============
+function buildVehicleGrid() {
+  const container = document.getElementById('vehicleGridContainer');
+
+  if (!appState.vehicleImage) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🖼</div>
+        <h3>Load Your Vehicle Image</h3>
+        <p>${appState.vehicles.length} vehicles ready. Load your vehicle sprite sheet image to see them.</p>
+        <button onclick="document.getElementById('vehicleImageInput').click()">Load Vehicle Image</button>
+      </div>`;
+    return;
+  }
+
+  if (appState.vehicles.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🚗</div>
+        <h3>No Vehicle Data</h3>
+        <p>No vehicle window data found. Use the tracer tool to trace window outlines, then reload.</p>
+      </div>`;
+    return;
+  }
+
+  const filtered = appState.activeCategory === 'all'
+    ? appState.vehicles
+    : appState.vehicles.filter(v => v.category === appState.activeCategory);
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>No vehicles in this category.</p></div>';
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'vehicle-grid';
+
+  const thumbQueue = [];
+  const catNames = { sedan: 'Sedan', suv: 'SUV', truck: 'Pickup Truck', specialty: 'Specialty' };
+
+  for (const veh of filtered) {
+    const card = document.createElement('div');
+    card.className = 'vehicle-card';
+    card.onclick = () => openSimulator(veh);
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    const thumbCanvas = document.createElement('canvas');
+    thumb.appendChild(thumbCanvas);
+    card.appendChild(thumb);
+
+    const info = document.createElement('div');
+    info.className = 'info';
+    info.innerHTML = `<h3>${veh.name}</h3><div class="cat">${catNames[veh.category] || veh.category}</div>`;
+    card.appendChild(info);
+
+    grid.appendChild(card);
+    thumbQueue.push({ canvas: thumbCanvas, vehicle: veh });
+  }
+
+  container.innerHTML = '';
+  container.appendChild(grid);
+
+  // Render thumbnails after the grid is in the DOM
+  requestAnimationFrame(() => {
+    for (const item of thumbQueue) {
+      renderThumbnail(item.canvas, item.vehicle);
+    }
+  });
+}
+
+function renderThumbnail(canvas, veh) {
+  if (!appState.vehicleImage) return;
+  const b = veh.bounds;
+
+  // Get the container's actual display width
+  const container = canvas.parentElement;
+  const displayW = container.clientWidth || 400;
+  // Use vehicle's native aspect ratio for height
+  const displayH = Math.round(displayW * (b.height / b.width));
+
+  canvas.width = displayW;
+  canvas.height = displayH;
+  const tctx = canvas.getContext('2d');
+
+  // Clear with matching background
+  tctx.fillStyle = '#e8e8e8';
+  tctx.fillRect(0, 0, displayW, displayH);
+
+  // Draw vehicle filling the canvas (aspect ratios match exactly)
+  tctx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, displayW, displayH);
+}
+
+function filterCategory(cat) {
+  appState.activeCategory = cat;
+  document.querySelectorAll('.category-tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  buildVehicleGrid();
+}
+
+// ============ SIMULATOR ============
+function openSimulator(veh) {
+  appState.selectedVehicle = veh;
+  appState.frontVLT = null;
+  appState.rearVLT = null;
+  document.getElementById('gridView').style.display = 'none';
+  document.getElementById('simView').classList.add('active');
+  document.getElementById('simVehicleName').textContent = veh.name;
+
+  buildVLTGrids();
+  renderSimulator();
+  updateSpecs();
+}
+
+function showGrid() {
+  document.getElementById('gridView').style.display = '';
+  document.getElementById('simView').classList.remove('active');
+  appState.selectedVehicle = null;
+  buildVehicleGrid();
+}
+
+function setBrand(brand) {
+  appState.currentBrand = brand;
+  document.querySelectorAll('.brand-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.brand === brand);
+  });
+
+  // Check if current VLT exists in new brand
+  const shades = TINT_DATA[brand].shades;
+  if (appState.frontVLT !== null && !shades.find(s => s.vlt === appState.frontVLT)) {
+    appState.frontVLT = null;
+  }
+  if (appState.rearVLT !== null && !shades.find(s => s.vlt === appState.rearVLT)) {
+    appState.rearVLT = null;
+  }
+
+  buildVLTGrids();
+  renderSimulator();
+  updateSpecs();
+}
+
+function buildVLTGrids() {
+  const brand = TINT_DATA[appState.currentBrand];
+
+  // Front
+  const frontGrid = document.getElementById('frontVLTGrid');
+  frontGrid.innerHTML = '';
+  const frontNone = createVLTButton(null, 'front');
+  frontGrid.appendChild(frontNone);
+  for (const shade of brand.shades) {
+    frontGrid.appendChild(createVLTButton(shade.vlt, 'front'));
+  }
+
+  // Rear
+  const rearGrid = document.getElementById('rearVLTGrid');
+  rearGrid.innerHTML = '';
+  const rearNone = createVLTButton(null, 'rear');
+  rearGrid.appendChild(rearNone);
+  for (const shade of brand.shades) {
+    rearGrid.appendChild(createVLTButton(shade.vlt, 'rear'));
+  }
+}
+
+function createVLTButton(vlt, zone) {
+  const btn = document.createElement('button');
+  btn.className = 'vlt-btn';
+
+  const isActive = (zone === 'front' ? appState.frontVLT : appState.rearVLT) === vlt;
+  if (isActive) btn.classList.add('active', zone);
+
+  if (vlt === null) {
+    btn.classList.add('none-btn');
+    btn.textContent = 'None';
+  } else {
+    const darkness = 1 - (vlt / 100);
+    const swatchColor = `rgba(0,0,0,${darkness * 0.9 + 0.05})`;
+    btn.innerHTML = `${vlt}%<span class="swatch" style="background:${swatchColor}"></span><span class="label">${VLT_NAMES[vlt] || ''}</span>`;
+  }
+
+  btn.onclick = () => {
+    animateToVLT(zone, vlt);
+    buildVLTGrids();
+    // Show before/after toggle when tint is applied
+    const hasAnyTint = appState.frontVLT !== null || appState.rearVLT !== null || vlt !== null;
+    document.getElementById('baToggle').classList.toggle('visible', hasAnyTint);
+  };
+
+  return btn;
+}
+
+function updateSpecs() {
+  const brand = TINT_DATA[appState.currentBrand];
+  document.getElementById('specBrand').textContent = brand.name;
+  document.getElementById('specFrontVLT').textContent = appState.frontVLT ? appState.frontVLT + '%' : 'None';
+  document.getElementById('specRearVLT').textContent = appState.rearVLT ? appState.rearVLT + '%' : 'None';
+  document.getElementById('specUV').textContent = '99%';
+
+  // Get specs for the darker tint (rear usually)
+  const activeVLT = appState.rearVLT || appState.frontVLT;
+  if (activeVLT) {
+    const shade = brand.shades.find(s => s.vlt === activeVLT);
+    if (shade) {
+      document.getElementById('specIR').textContent = shade.ir ? shade.ir + '%' : 'N/A';
+      document.getElementById('specTSER').textContent = shade.tser + '%';
+    }
+  } else {
+    document.getElementById('specIR').textContent = '-';
+    document.getElementById('specTSER').textContent = '-';
+  }
+
+  // Update labels
+  document.getElementById('frontTintLabel').textContent = 'Front: ' + (appState.frontVLT ? appState.frontVLT + '% VLT' : 'None');
+  document.getElementById('rearTintLabel').textContent = 'Rear: ' + (appState.rearVLT ? appState.rearVLT + '% VLT' : 'None');
+
+  // Texas legal warning: front windows must be 25% VLT or higher
+  const warning = document.getElementById('legalWarning');
+  if (warning) {
+    const illegal = appState.frontVLT !== null && appState.frontVLT < 25;
+    warning.style.display = illegal ? 'block' : 'none';
+  }
+}
+
+// ============ MASK-BASED WINDOW RENDERING ============
+// Generates body masks with transparent window cutouts for each vehicle.
+// Tint is applied as a color layer visible through the transparent windows.
+
+const maskCache = {}; // Cache generated masks by vehicle id + scale
+
+// Generate a body mask for a vehicle at a given scale
+// Returns a canvas where body is opaque and windows are transparent (with soft edges)
+function generateVehicleMask(veh, scale) {
+  const cacheKey = veh.id + '_' + scale.toFixed(3);
+  if (maskCache[cacheKey]) return maskCache[cacheKey];
+
+  const b = veh.bounds;
+  const w = Math.round(b.width * scale);
+  const h = Math.round(b.height * scale);
+
+  // Start with full vehicle image
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = w;
+  maskCanvas.height = h;
+  const mctx = maskCanvas.getContext('2d');
+  mctx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, w, h);
+
+  // Cut out each window polygon with soft edges
+  for (const win of veh.windows) {
+    if (win.points.length < 3) continue;
+
+    // Draw filled polygon on a temp canvas
+    const cutCanvas = document.createElement('canvas');
+    cutCanvas.width = w;
+    cutCanvas.height = h;
+    const cctx = cutCanvas.getContext('2d');
+    cctx.beginPath();
+    for (let i = 0; i < win.points.length; i++) {
+      const px = win.points[i][0] * scale;
+      const py = win.points[i][1] * scale;
+      if (i === 0) cctx.moveTo(px, py);
+      else cctx.lineTo(px, py);
+    }
+    cctx.closePath();
+    cctx.fillStyle = 'white';
+    cctx.fill();
+
+    // Blur for soft anti-aliased edges
+    const blurCanvas = document.createElement('canvas');
+    blurCanvas.width = w;
+    blurCanvas.height = h;
+    const bctx = blurCanvas.getContext('2d');
+    bctx.filter = 'blur(1.5px)';
+    bctx.drawImage(cutCanvas, 0, 0);
+
+    // Cut this shape out of the mask (destination-out)
+    mctx.save();
+    mctx.globalCompositeOperation = 'destination-out';
+    mctx.drawImage(blurCanvas, 0, 0);
+    mctx.restore();
+  }
+
+  // Also generate an inverted mask (white where windows are, transparent where body is)
+  const invCanvas = document.createElement('canvas');
+  invCanvas.width = w;
+  invCanvas.height = h;
+  const ictx = invCanvas.getContext('2d');
+  ictx.fillStyle = 'white';
+  ictx.fillRect(0, 0, w, h);
+  ictx.globalCompositeOperation = 'destination-out';
+  ictx.drawImage(maskCanvas, 0, 0);
+
+  // Generate per-window-type inverted masks for front/rear independent tinting
+  const frontInv = document.createElement('canvas');
+  frontInv.width = w; frontInv.height = h;
+  const fctx = frontInv.getContext('2d');
+
+  const rearInv = document.createElement('canvas');
+  rearInv.width = w; rearInv.height = h;
+  const rctx = rearInv.getContext('2d');
+
+  for (const win of veh.windows) {
+    if (win.points.length < 3) continue;
+    const targetCtx = (win.type === 'front' || win.type === 'windshield') ? fctx : rctx;
+
+    const cutCanvas = document.createElement('canvas');
+    cutCanvas.width = w; cutCanvas.height = h;
+    const cctx = cutCanvas.getContext('2d');
+    cctx.beginPath();
+    for (let i = 0; i < win.points.length; i++) {
+      const px = win.points[i][0] * scale;
+      const py = win.points[i][1] * scale;
+      if (i === 0) cctx.moveTo(px, py);
+      else cctx.lineTo(px, py);
+    }
+    cctx.closePath();
+    cctx.fillStyle = 'white';
+    cctx.fill();
+
+    // Blur for soft edges
+    const blurCanvas = document.createElement('canvas');
+    blurCanvas.width = w; blurCanvas.height = h;
+    const bctx = blurCanvas.getContext('2d');
+    bctx.filter = 'blur(1.5px)';
+    bctx.drawImage(cutCanvas, 0, 0);
+
+    targetCtx.drawImage(blurCanvas, 0, 0);
+  }
+
+  const result = { body: maskCanvas, allWindows: invCanvas, front: frontInv, rear: rearInv, w, h };
+  maskCache[cacheKey] = result;
+  return result;
+}
+
+// Apply tint to a specific window zone using its inverted mask
+function applyZoneTint(mainCtx, zoneMask, w, h, cr, cg, cb, vlt) {
+  // Create tint color layer masked to window areas
+  const tintCanvas = document.createElement('canvas');
+  tintCanvas.width = w; tintCanvas.height = h;
+  const tctx = tintCanvas.getContext('2d');
+
+  // Fill with tint color (darker = lower VLT)
+  const tintVal = Math.round(10 + (245 * vlt / 100));
+  tctx.fillStyle = `rgb(${Math.max(cr, tintVal)}, ${Math.max(cg, tintVal)}, ${Math.max(cb, tintVal)})`;
+  tctx.fillRect(0, 0, w, h);
+
+  // Mask to window areas only
+  tctx.globalCompositeOperation = 'destination-in';
+  tctx.drawImage(zoneMask, 0, 0);
+
+  // Apply to main canvas with multiply blend
+  mainCtx.save();
+  mainCtx.globalCompositeOperation = 'multiply';
+  mainCtx.drawImage(tintCanvas, 0, 0);
+  mainCtx.restore();
+
+  // Color-burn pass for depth on darker tints
+  if (vlt <= 35) {
+    const burnCanvas = document.createElement('canvas');
+    burnCanvas.width = w; burnCanvas.height = h;
+    const bctx = burnCanvas.getContext('2d');
+    bctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
+    bctx.fillRect(0, 0, w, h);
+    bctx.globalCompositeOperation = 'destination-in';
+    bctx.drawImage(zoneMask, 0, 0);
+
+    mainCtx.save();
+    mainCtx.globalCompositeOperation = 'color-burn';
+    mainCtx.globalAlpha = (1 - vlt / 100) * 0.35;
+    mainCtx.drawImage(burnCanvas, 0, 0);
+    mainCtx.globalAlpha = 1;
+    mainCtx.restore();
+  }
+}
+
+// ============ RENDER SIMULATOR ============
+function renderSimulator() {
+  const veh = appState.selectedVehicle;
+  if (!veh || !appState.vehicleImage) return;
+
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const b = veh.bounds;
+
+  // Set canvas size to vehicle bounds
+  const maxW = document.querySelector('.sim-canvas-wrapper').clientWidth - 40;
+  const maxH = document.querySelector('.sim-canvas-wrapper').clientHeight - 40;
+  const scale = Math.min(maxW / b.width, maxH / b.height, 2);
+
+  canvas.width = b.width * scale;
+  canvas.height = b.height * scale;
+
+  // Generate masks for this vehicle (cached after first call)
+  const masks = generateVehicleMask(veh, scale);
+
+  // Step 1: Draw the original vehicle
+  ctx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
+
+  // Step 2: Apply tint to front and rear windows independently
+  const brand = TINT_DATA[appState.currentBrand];
+  const [cr, cg, cb] = brand.color;
+
+  if (appState.frontVLT !== null) {
+    applyZoneTint(ctx, masks.front, masks.w, masks.h, cr, cg, cb, appState.frontVLT);
+  }
+  if (appState.rearVLT !== null) {
+    applyZoneTint(ctx, masks.rear, masks.w, masks.h, cr, cg, cb, appState.rearVLT);
+  }
+
+  // Before/after: set the untinted image as wrapper background so it shows through the clip
+  const wrapper = document.getElementById('simCanvasWrapper');
+  if (baState.active) {
+    // Create untinted version as background
+    const bgCanvas = document.createElement('canvas');
+    bgCanvas.width = canvas.width;
+    bgCanvas.height = canvas.height;
+    const bgCtx = bgCanvas.getContext('2d');
+    bgCtx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
+    wrapper.style.backgroundImage = 'url(' + bgCanvas.toDataURL() + ')';
+    wrapper.style.backgroundSize = canvas.width + 'px ' + canvas.height + 'px';
+    wrapper.style.backgroundPosition = 'center';
+    wrapper.style.backgroundRepeat = 'no-repeat';
+    updateSliderPosition();
+  } else {
+    wrapper.style.backgroundImage = '';
+    canvas.style.clipPath = '';
+  }
+}
+
+function calculateTintOpacity(vlt) {
+  // Map VLT to visual opacity
+  // 5% VLT = very dark, 70% = very light
+  // Using a curve that looks realistic
+  const normalized = vlt / 100;
+  const opacity = Math.pow(1 - normalized, 0.7) * 0.92;
+  return Math.max(0.05, Math.min(0.95, opacity));
+}
+
+// ============ EMBED MODE ============
+(function initEmbedMode() {
+  // Support both ?embed=true and #embed for static servers that strip query strings
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('embed') === 'true' || window.location.hash === '#embed') {
+    document.body.classList.add('embed-mode');
+  }
+})();
+
+// ============ BEFORE/AFTER SLIDER ============
+let baState = { active: false, position: 0.5, dragging: false };
+
+function toggleBeforeAfter(enabled) {
+  baState.active = enabled;
+  const slider = document.getElementById('baSlider');
+  slider.classList.toggle('active', enabled);
+  if (enabled) {
+    baState.position = 0.5;
+    updateSliderPosition();
+    renderSimulator(); // Re-render to create the before/after effect
+  } else {
+    // Remove clip and re-render normally
+    document.getElementById('simCanvas').style.clipPath = '';
+    renderSimulator();
+  }
+}
+
+function updateSliderPosition() {
+  const wrapper = document.getElementById('simCanvasWrapper');
+  const rect = wrapper.getBoundingClientRect();
+  const x = baState.position * rect.width;
+  document.getElementById('baLine').style.left = x + 'px';
+  document.getElementById('baHandle').style.left = x + 'px';
+
+  // Clip the tinted canvas to show only the right portion (tinted)
+  // Left side will show the untinted version drawn underneath
+  const pct = baState.position * 100;
+  document.getElementById('simCanvas').style.clipPath = 'inset(0 0 0 ' + pct + '%)';
+}
+
+(function initBASlider() {
+  const slider = document.getElementById('baSlider');
+  if (!slider) return;
+
+  function getPos(e) {
+    const rect = slider.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    return Math.max(0.02, Math.min(0.98, (clientX - rect.left) / rect.width));
+  }
+
+  function onStart(e) {
+    if (!baState.active) return;
+    e.preventDefault();
+    baState.dragging = true;
+    baState.position = getPos(e);
+    updateSliderPosition();
+  }
+  function onMove(e) {
+    if (!baState.dragging) return;
+    e.preventDefault();
+    baState.position = getPos(e);
+    updateSliderPosition();
+  }
+  function onEnd() { baState.dragging = false; }
+
+  slider.addEventListener('mousedown', onStart);
+  slider.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchend', onEnd);
+})();
+
+// ============ ANIMATED TRANSITIONS ============
+let animState = { animId: null, fromFrontVLT: null, fromRearVLT: null, startTime: 0, duration: 300 };
+
+function animateToVLT(zone, targetVLT) {
+  // Cancel any running animation
+  if (animState.animId) cancelAnimationFrame(animState.animId);
+
+  const fromFront = appState.frontVLT;
+  const fromRear = appState.rearVLT;
+
+  // Set the target immediately in app state
+  if (zone === 'front') appState.frontVLT = targetVLT;
+  else appState.rearVLT = targetVLT;
+
+  // If no previous tint to animate from, just render immediately
+  const fromVal = zone === 'front' ? fromFront : fromRear;
+  if (fromVal === null && targetVLT === null) { renderSimulator(); updateSpecs(); return; }
+
+  // Animation values (treat null as 100% = no tint)
+  const startVal = fromVal === null ? 100 : fromVal;
+  const endVal = targetVLT === null ? 100 : targetVLT;
+
+  if (startVal === endVal) { renderSimulator(); updateSpecs(); return; }
+
+  animState.startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - animState.startTime;
+    const t = Math.min(1, elapsed / animState.duration);
+    // Ease out cubic
+    const eased = 1 - Math.pow(1 - t, 3);
+    const currentVal = Math.round(startVal + (endVal - startVal) * eased);
+
+    // Temporarily set the interpolated value for rendering
+    const realFront = appState.frontVLT;
+    const realRear = appState.rearVLT;
+    if (zone === 'front') appState.frontVLT = currentVal === 100 ? null : currentVal;
+    else appState.rearVLT = currentVal === 100 ? null : currentVal;
+
+    renderSimulator();
+
+    // Restore real values
+    appState.frontVLT = realFront;
+    appState.rearVLT = realRear;
+
+    if (t < 1) {
+      animState.animId = requestAnimationFrame(step);
+    } else {
+      animState.animId = null;
+      renderSimulator(); // Final render with actual values
+      updateSpecs();
+    }
+  }
+
+  animState.animId = requestAnimationFrame(step);
+  updateSpecs(); // Update labels immediately
+}
+
+// ============ SHARE CARD ============
+function downloadShareCard() {
+  const veh = appState.selectedVehicle;
+  if (!veh || !appState.vehicleImage) return;
+
+  const cardW = 1200, cardH = 630;
+  const card = document.createElement('canvas');
+  card.width = cardW;
+  card.height = cardH;
+  const ctx = card.getContext('2d');
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, cardW, cardH);
+  grad.addColorStop(0, '#0f0f14');
+  grad.addColorStop(1, '#1a1a24');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, cardW, cardH);
+
+  // Draw the vehicle (centered, with tint applied)
+  const b = veh.bounds;
+  const vehScale = Math.min((cardW - 80) / b.width, (cardH - 180) / b.height);
+  const vehW = b.width * vehScale;
+  const vehH = b.height * vehScale;
+  const vehX = (cardW - vehW) / 2;
+  const vehY = 30;
+
+  // Draw vehicle base
+  ctx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, vehX, vehY, vehW, vehH);
+
+  // Apply tint using a temporary full render
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = Math.round(vehW);
+  tempCanvas.height = Math.round(vehH);
+  const tctx = tempCanvas.getContext('2d');
+  const tempScale = vehW / b.width;
+  tctx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, vehW, vehH);
+
+  const masks = generateVehicleMask(veh, tempScale);
+  const brand = TINT_DATA[appState.currentBrand];
+  const [cr, cg, cb] = brand.color;
+  if (appState.frontVLT !== null) applyZoneTint(tctx, masks.front, masks.w, masks.h, cr, cg, cb, appState.frontVLT);
+  if (appState.rearVLT !== null) applyZoneTint(tctx, masks.rear, masks.w, masks.h, cr, cg, cb, appState.rearVLT);
+
+  ctx.drawImage(tempCanvas, vehX, vehY);
+
+  // Bottom bar
+  const barY = cardH - 120;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+  ctx.fillRect(0, barY, cardW, 120);
+
+  // Left: branding
+  ctx.fillStyle = '#CC1122';
+  ctx.font = 'bold 28px Inter, system-ui, sans-serif';
+  ctx.fillText('THE TRIM SHOP', 40, barY + 40);
+  ctx.fillStyle = '#D4A520';
+  ctx.font = '600 13px Inter, system-ui, sans-serif';
+  ctx.fillText('WINDOW TINT SPECIALIST SINCE 1979', 40, barY + 62);
+  ctx.fillStyle = '#FFD54F';
+  ctx.font = '600 18px Inter, system-ui, sans-serif';
+  ctx.fillText('(903) 757-3846  •  Longview, TX', 40, barY + 90);
+
+  // Right: tint specs
+  const specX = cardW - 350;
+  ctx.fillStyle = '#e8e8f0';
+  ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+  ctx.fillText(veh.name, specX, barY + 35);
+  ctx.font = '14px Inter, system-ui, sans-serif';
+  ctx.fillStyle = '#888899';
+  const brandData = TINT_DATA[appState.currentBrand];
+  ctx.fillText(brandData.name, specX, barY + 55);
+
+  ctx.fillStyle = '#00b8d4';
+  ctx.fillText('Front: ' + (appState.frontVLT ? appState.frontVLT + '% VLT' : 'None'), specX, barY + 78);
+  ctx.fillStyle = '#ff9100';
+  ctx.fillText('Rear: ' + (appState.rearVLT ? appState.rearVLT + '% VLT' : 'None'), specX + 160, barY + 78);
+
+  ctx.fillStyle = '#888899';
+  ctx.font = '12px Inter, system-ui, sans-serif';
+  ctx.fillText('99% UV Rejection  •  Lifetime Warranty', specX, barY + 100);
+
+  // Download
+  try {
+    const dataURL = card.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = 'tint-preview-' + veh.name.replace(/\s+/g, '-').toLowerCase() + '.png';
+    a.click();
+  } catch(e) {
+    // Fallback for tainted canvas (cross-origin image)
+    const blob = card.toDataURL('image/png');
+    window.open(blob, '_blank');
+  }
+}
+
+// ============ WINDOW RESIZE ============
+window.addEventListener('resize', () => {
+  if (appState.selectedVehicle) {
+    renderSimulator();
+    if (baState.active) updateSliderPosition();
+  }
+});
+
+// ============ INIT ============
+autoLoad();
+
+// Auto-load sprite sheet from same directory
+(function autoLoadImage() {
+  const img = new Image();
+  img.onload = () => {
+    appState.vehicleImage = img;
+    try { localStorage.setItem('trimshop-sim-image', img.src); } catch(e) {}
+    document.getElementById('dataStatusText').innerHTML = '<span class="loaded">✓</span> ' + appState.vehicles.length + ' vehicles ready — Select a vehicle below to customize tint';
+    buildVehicleGrid();
+  };
+  img.onerror = () => {
+    // Image not found at relative path — user will use the file picker
+  };
+  img.src = 'Car images.png';
+})();
+</script>
+</body>
+</html>

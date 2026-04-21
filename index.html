@@ -163,9 +163,10 @@
     justify-content: center;
     min-height: 250px;
   }
-  .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; }
   .sim-canvas-wrapper { position: relative; }
-  #simCanvasBefore, #simCanvas { max-width: 100%; max-height: 100%; }
+  .canvas-stack { position: relative; display: inline-block; }
+  .canvas-stack canvas { display: block; max-width: 100%; max-height: 100%; }
+  #simCanvasBefore { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
   #simCanvas { position: relative; z-index: 1; }
 
   .tint-label-overlay {
@@ -635,8 +636,10 @@
       </div>
       <div class="sim-vehicle-name" id="simVehicleName"></div>
       <div class="sim-canvas-wrapper" id="simCanvasWrapper">
-        <canvas id="simCanvasBefore" style="display:none;"></canvas>
-        <canvas id="simCanvas"></canvas>
+        <div class="canvas-stack" id="canvasStack">
+          <canvas id="simCanvasBefore"></canvas>
+          <canvas id="simCanvas"></canvas>
+        </div>
         <!-- Before/After Slider -->
         <div class="ba-slider-container" id="baSlider">
           <div class="ba-label before">Before</div>
@@ -1296,22 +1299,12 @@ function renderSimulator() {
     applyZoneTint(ctx, masks.rear, masks.w, masks.h, cr, cg, cb, appState.rearVLT);
   }
 
-  // Before/after: draw untinted version on a second canvas behind the tinted one
+  // Before/after: draw untinted version on canvas behind the tinted one
   const beforeCanvas = document.getElementById('simCanvasBefore');
   if (baState.active) {
     beforeCanvas.width = canvas.width;
     beforeCanvas.height = canvas.height;
     beforeCanvas.style.display = 'block';
-    // Position the before canvas exactly behind the after canvas
-    beforeCanvas.style.position = 'absolute';
-    beforeCanvas.style.zIndex = '0';
-    // Match the rendered size of the after canvas
-    const afterRect = canvas.getBoundingClientRect();
-    const wrapperRect = document.getElementById('simCanvasWrapper').getBoundingClientRect();
-    beforeCanvas.style.left = (afterRect.left - wrapperRect.left) + 'px';
-    beforeCanvas.style.top = (afterRect.top - wrapperRect.top) + 'px';
-    beforeCanvas.style.width = afterRect.width + 'px';
-    beforeCanvas.style.height = afterRect.height + 'px';
     const bCtx = beforeCanvas.getContext('2d');
     bCtx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
     updateSliderPosition();

@@ -470,13 +470,41 @@
 
   /* Simulator view in embed */
   body.embed-mode .sim-preview { background: #f0f0f2; padding: 12px; }
-  body.embed-mode .sim-canvas-wrapper { min-height: auto; align-items: flex-start; }
+  body.embed-mode .sim-canvas-wrapper { min-height: auto; align-items: flex-start; padding: 8px; }
   body.embed-mode .sim-controls { padding: 12px; }
   body.embed-mode .control-section { margin-bottom: 12px; }
   body.embed-mode .vlt-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
   body.embed-mode .vlt-btn { padding: 6px 2px; font-size: 12px; }
   body.embed-mode .vlt-btn .label { font-size: 9px; }
   body.embed-mode .vlt-btn .swatch { height: 3px; }
+  body.embed-mode .vehicle-grid-view { padding: 8px; }
+
+  /* Mobile embed — maximize space */
+  @media (max-width: 768px) {
+    body.embed-mode .vehicle-grid-view { padding: 6px; }
+    body.embed-mode .category-tabs { margin-bottom: 8px; }
+    body.embed-mode .category-tabs button { padding: 6px 10px; font-size: 11px; }
+    body.embed-mode .vehicle-card .info { padding: 6px 8px; }
+    body.embed-mode .vehicle-card .info h3 { font-size: 13px; }
+    body.embed-mode .vehicle-card .info .cat { font-size: 10px; }
+    body.embed-mode .sim-preview { padding: 8px; }
+    body.embed-mode .sim-vehicle-name { font-size: 16px; margin-bottom: 4px; }
+    body.embed-mode .sim-top-bar { margin-bottom: 4px; }
+    body.embed-mode .sim-back-btn { font-size: 11px; padding: 4px 8px; }
+    body.embed-mode .ba-btn { padding: 5px 10px; font-size: 11px; }
+    body.embed-mode .share-btn-sm { padding: 5px 10px; font-size: 11px; }
+    body.embed-mode .sim-controls { padding: 8px; }
+    body.embed-mode .control-section { margin-bottom: 10px; }
+    body.embed-mode .brand-btn { padding: 8px 6px; }
+    body.embed-mode .brand-btn .name { font-size: 11px; }
+    body.embed-mode .brand-btn .desc { font-size: 8px; }
+    body.embed-mode .tint-zone-header h4 { font-size: 12px; }
+    body.embed-mode .vlt-grid { grid-template-columns: repeat(5, 1fr); gap: 3px; }
+    body.embed-mode .vlt-btn { padding: 5px 1px; font-size: 11px; }
+    body.embed-mode .specs-table td { font-size: 11px; padding: 3px 0; }
+    body.embed-mode .legal-info { font-size: 9px; }
+    body.embed-mode .legal-warning { font-size: 9px; }
+  }
   body.embed-mode .sim-back-btn { color: #555; border-color: #ccc; }
   body.embed-mode .sim-back-btn:hover { color: #222; border-color: #999; }
   body.embed-mode .sim-vehicle-name { color: #222; }
@@ -1525,21 +1553,29 @@ function downloadShareCard() {
   ctx.font = '12px Inter, system-ui, sans-serif';
   ctx.fillText('99% UV Rejection  •  Lifetime Warranty', specX, barY + 100);
 
-  // Download share card
+  // Share card — open in new tab (works in iframes where downloads are blocked)
   try {
-    card.toBlob(function(blob) {
-      const url = URL.createObjectURL(blob);
+    const dataURL = card.toDataURL('image/png');
+    // Open image in a new tab — user can long-press/right-click to save
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write('<html><head><title>Tint Preview - ' + veh.name + ' | The Trim Shop</title>' +
+        '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+        '<style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}' +
+        'img{max-width:100%;height:auto;}</style></head>' +
+        '<body><img src="' + dataURL + '" alt="Tint Preview"></body></html>');
+      win.document.close();
+    } else {
+      // Popup blocked — try download link as fallback
       const a = document.createElement('a');
-      a.href = url;
+      a.href = dataURL;
       a.download = 'tint-preview-' + veh.name.replace(/\s+/g, '-').toLowerCase() + '.png';
-      a.target = '_top'; // Break out of iframe
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-    }, 'image/png');
+    }
   } catch(e) {
-    alert('Unable to generate share card in this browser.');
+    alert('Unable to generate share card. Try visiting the simulator directly.');
   }
 }
 

@@ -314,13 +314,91 @@
   }
   .site-footer a { color: var(--gold); text-decoration: none; }
 
+  /* ============ SIM ACTIONS (under image) ============ */
+  .sim-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    gap: 12px;
+  }
+  .sim-actions .ba-toggle {
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .sim-actions .ba-toggle.visible { display: flex; }
+  .sim-actions .ba-toggle label { font-size: 12px; color: var(--text-muted); cursor: pointer; }
+  .sim-actions .ba-toggle input { cursor: pointer; }
+  .share-btn-sm {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+  .share-btn-sm:hover { background: var(--red-dark); }
+
   /* ============ RESPONSIVE ============ */
   @media (max-width: 768px) {
     .simulator-view.active { flex-direction: column; }
-    .sim-controls { width: 100%; border-left: none; border-top: 1px solid var(--border); }
-    .vehicle-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-    .site-header { flex-direction: column; text-align: center; }
+    .sim-controls { width: 100%; border-left: none; border-top: 1px solid var(--border); padding: 16px; }
+    .vehicle-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .site-header { flex-direction: column; text-align: center; padding: 12px 16px; }
     .header-right { margin-left: 0; text-align: center; }
+    .logo-text h1 { font-size: 20px; }
+    .data-status { padding: 8px 16px; font-size: 12px; flex-wrap: wrap; }
+
+    /* Simulator mobile */
+    .sim-preview { padding: 12px; }
+    .sim-vehicle-name { font-size: 18px; margin-bottom: 8px; }
+    .sim-canvas-wrapper { min-height: 160px; max-height: 300px; border-radius: 8px; }
+    .sim-back-btn { font-size: 12px; padding: 5px 10px; margin-bottom: 8px; }
+
+    /* Compact VLT grid on mobile */
+    .vlt-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .vlt-btn { padding: 8px 2px; font-size: 12px; }
+    .vlt-btn .label { font-size: 9px; }
+    .vlt-btn .swatch { height: 4px; margin-top: 2px; }
+
+    /* Control sections tighter */
+    .control-section { margin-bottom: 16px; }
+    .brand-selector { gap: 6px; }
+    .brand-btn { padding: 10px 8px; }
+    .brand-btn .name { font-size: 12px; }
+    .brand-btn .desc { font-size: 9px; }
+
+    /* Specs compact */
+    .specs-table td { padding: 4px 0; font-size: 11px; }
+    .specs-note { font-size: 10px; padding: 8px; }
+    .legal-info { font-size: 10px; padding: 8px; }
+    .legal-warning { font-size: 10px; padding: 6px 8px; }
+
+    /* Share button full width on mobile */
+    .share-btn { padding: 10px; font-size: 13px; }
+
+    /* Tint labels smaller */
+    .tint-label { font-size: 10px; padding: 4px 8px; }
+    .tint-label-overlay { gap: 6px; bottom: 8px; left: 8px; }
+
+    /* Category tabs scrollable */
+    .category-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .category-tabs button { padding: 8px 12px; font-size: 12px; white-space: nowrap; }
+
+    /* Footer compact */
+    .site-footer { padding: 12px 16px; font-size: 11px; }
+  }
+
+  /* Extra small phones */
+  @media (max-width: 380px) {
+    .vlt-grid { grid-template-columns: repeat(3, 1fr); }
+    .vehicle-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sim-vehicle-name { font-size: 16px; }
   }
 
   /* ============ EMPTY STATE ============ */
@@ -432,16 +510,7 @@
   }
   .share-btn:hover { background: var(--red-dark); }
 
-  /* ============ BEFORE/AFTER TOGGLE ============ */
-  .ba-toggle {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0;
-  }
-  .ba-toggle.visible { display: flex; }
-  .ba-toggle label { font-size: 12px; color: var(--text-muted); cursor: pointer; }
-  .ba-toggle input { cursor: pointer; }
+  /* (ba-toggle styles moved to .sim-actions section) */
 </style>
 </head>
 <body>
@@ -510,6 +579,14 @@
           <div class="tint-label rear" id="rearTintLabel">Rear: None</div>
         </div>
       </div>
+      <!-- Before/After Toggle + Share (right under the image) -->
+      <div class="sim-actions" id="simActions">
+        <div class="ba-toggle" id="baToggle">
+          <input type="checkbox" id="baCheckbox" onchange="toggleBeforeAfter(this.checked)">
+          <label for="baCheckbox">Before / After</label>
+        </div>
+        <button class="share-btn-sm" onclick="downloadShareCard()">&#x1F4F7; Download Share Card</button>
+      </div>
     </div>
     <div class="sim-controls">
       <!-- Brand Selector -->
@@ -562,21 +639,6 @@
         <div class="specs-note">
           All SolarFX films block 99% of harmful UV A/B rays and come with a premium lifetime warranty.
         </div>
-      </div>
-
-      <!-- Before/After Toggle -->
-      <div class="control-section">
-        <div class="ba-toggle" id="baToggle">
-          <input type="checkbox" id="baCheckbox" onchange="toggleBeforeAfter(this.checked)">
-          <label for="baCheckbox">Before / After Comparison</label>
-        </div>
-      </div>
-
-      <!-- Share Card -->
-      <div class="control-section">
-        <button class="share-btn" onclick="downloadShareCard()">
-          &#x1F4F7; Download Share Card
-        </button>
       </div>
 
       <!-- Texas Legal Info -->

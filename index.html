@@ -163,7 +163,9 @@
     justify-content: center;
     min-height: 250px;
   }
-  .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; display: block; }
+  .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; }
+  #simCanvasBefore { position: absolute; top: 0; left: 0; z-index: 0; }
+  #simCanvas { position: relative; z-index: 1; }
 
   .tint-label-overlay {
     position: absolute;
@@ -632,6 +634,7 @@
       </div>
       <div class="sim-vehicle-name" id="simVehicleName"></div>
       <div class="sim-canvas-wrapper" id="simCanvasWrapper">
+        <canvas id="simCanvasBefore" style="display:none;"></canvas>
         <canvas id="simCanvas"></canvas>
         <!-- Before/After Slider -->
         <div class="ba-slider-container" id="baSlider">
@@ -1292,22 +1295,19 @@ function renderSimulator() {
     applyZoneTint(ctx, masks.rear, masks.w, masks.h, cr, cg, cb, appState.rearVLT);
   }
 
-  // Before/after: set the untinted image as wrapper background so it shows through the clip
-  const wrapper = document.getElementById('simCanvasWrapper');
+  // Before/after: draw untinted version on a second canvas behind the tinted one
+  const beforeCanvas = document.getElementById('simCanvasBefore');
   if (baState.active) {
-    // Create untinted version as background
-    const bgCanvas = document.createElement('canvas');
-    bgCanvas.width = canvas.width;
-    bgCanvas.height = canvas.height;
-    const bgCtx = bgCanvas.getContext('2d');
-    bgCtx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
-    wrapper.style.backgroundImage = 'url(' + bgCanvas.toDataURL() + ')';
-    wrapper.style.backgroundSize = canvas.width + 'px ' + canvas.height + 'px';
-    wrapper.style.backgroundPosition = 'center';
-    wrapper.style.backgroundRepeat = 'no-repeat';
+    beforeCanvas.width = canvas.width;
+    beforeCanvas.height = canvas.height;
+    beforeCanvas.style.display = 'block';
+    beforeCanvas.style.maxWidth = canvas.style.maxWidth || '100%';
+    beforeCanvas.style.maxHeight = canvas.style.maxHeight || '100%';
+    const bCtx = beforeCanvas.getContext('2d');
+    bCtx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
     updateSliderPosition();
   } else {
-    wrapper.style.backgroundImage = '';
+    beforeCanvas.style.display = 'none';
     canvas.style.clipPath = '';
   }
 }

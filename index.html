@@ -144,7 +144,6 @@
     border-radius: 6px;
     cursor: pointer;
     font-size: 13px;
-    margin-bottom: 16px;
     width: fit-content;
     transition: all 0.2s;
   }
@@ -314,22 +313,32 @@
   }
   .site-footer a { color: var(--gold); text-decoration: none; }
 
-  /* ============ SIM ACTIONS (under image) ============ */
-  .sim-actions {
+  /* ============ SIM TOP BAR ============ */
+  .sim-top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0;
-    gap: 12px;
+    margin-bottom: 8px;
   }
-  .sim-actions .ba-toggle {
-    display: none;
+  .sim-top-bar .sim-back-btn { margin-bottom: 0; }
+  .sim-top-actions {
+    display: flex;
     align-items: center;
     gap: 8px;
   }
-  .sim-actions .ba-toggle.visible { display: flex; }
-  .sim-actions .ba-toggle label { font-size: 12px; color: var(--text-muted); cursor: pointer; }
-  .sim-actions .ba-toggle input { cursor: pointer; }
+  .ba-btn {
+    background: var(--bg-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .ba-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .ba-btn.active { background: rgba(204,17,34,0.1); border-color: var(--red); color: var(--red); }
   .share-btn-sm {
     background: var(--red);
     color: white;
@@ -482,8 +491,9 @@
   body.embed-mode .legal-info { background: #fff; border-color: #ddd; color: #555; }
   body.embed-mode .legal-info strong { color: #222; }
   body.embed-mode .legal-warning { background: rgba(255,60,60,0.08); border-color: rgba(255,60,60,0.2); }
-  body.embed-mode .sim-actions { color: #555; }
-  body.embed-mode .sim-actions .ba-toggle label { color: #555; }
+  body.embed-mode .ba-btn { background: #fff; border-color: #ddd; color: #666; }
+  body.embed-mode .ba-btn:hover { border-color: #999; color: #333; }
+  body.embed-mode .ba-btn.active { background: rgba(204,17,34,0.05); border-color: var(--red); color: var(--red); }
   body.embed-mode .share-btn-sm { background: var(--red); color: white; }
 
   /* ============ BEFORE/AFTER SLIDER ============ */
@@ -555,7 +565,6 @@
   }
   .share-btn:hover { background: var(--red-dark); }
 
-  /* (ba-toggle styles moved to .sim-actions section) */
 </style>
 </head>
 <body>
@@ -608,7 +617,13 @@
   <!-- Simulator View -->
   <div class="simulator-view" id="simView">
     <div class="sim-preview">
-      <button class="sim-back-btn" onclick="showGrid()">← Back to Vehicles</button>
+      <div class="sim-top-bar">
+        <button class="sim-back-btn" onclick="showGrid()">← Back to Vehicles</button>
+        <div class="sim-top-actions" id="simActions">
+          <button class="ba-btn" id="baBtn" onclick="toggleBeforeAfter()" style="display:none;">&#x2194; Before / After</button>
+          <button class="share-btn-sm" onclick="downloadShareCard()">&#x1F4F7; Share</button>
+        </div>
+      </div>
       <div class="sim-vehicle-name" id="simVehicleName"></div>
       <div class="sim-canvas-wrapper" id="simCanvasWrapper">
         <canvas id="simCanvas"></canvas>
@@ -623,14 +638,6 @@
           <div class="tint-label front" id="frontTintLabel">Front: None</div>
           <div class="tint-label rear" id="rearTintLabel">Rear: None</div>
         </div>
-      </div>
-      <!-- Before/After Toggle + Share (right under the image) -->
-      <div class="sim-actions" id="simActions">
-        <div class="ba-toggle" id="baToggle">
-          <input type="checkbox" id="baCheckbox" onchange="toggleBeforeAfter(this.checked)">
-          <label for="baCheckbox">Before / After</label>
-        </div>
-        <button class="share-btn-sm" onclick="downloadShareCard()">&#x1F4F7; Download Share Card</button>
       </div>
     </div>
     <div class="sim-controls">
@@ -1049,9 +1056,9 @@ function createVLTButton(vlt, zone) {
   btn.onclick = () => {
     animateToVLT(zone, vlt);
     buildVLTGrids();
-    // Show before/after toggle when tint is applied
+    // Show before/after button when tint is applied
     const hasAnyTint = appState.frontVLT !== null || appState.rearVLT !== null || vlt !== null;
-    document.getElementById('baToggle').classList.toggle('visible', hasAnyTint);
+    document.getElementById('baBtn').style.display = hasAnyTint ? '' : 'none';
   };
 
   return btn;
@@ -1320,16 +1327,17 @@ function calculateTintOpacity(vlt) {
 // ============ BEFORE/AFTER SLIDER ============
 let baState = { active: false, position: 0.5, dragging: false };
 
-function toggleBeforeAfter(enabled) {
-  baState.active = enabled;
+function toggleBeforeAfter() {
+  baState.active = !baState.active;
   const slider = document.getElementById('baSlider');
-  slider.classList.toggle('active', enabled);
-  if (enabled) {
+  const btn = document.getElementById('baBtn');
+  slider.classList.toggle('active', baState.active);
+  btn.classList.toggle('active', baState.active);
+  if (baState.active) {
     baState.position = 0.5;
     updateSliderPosition();
-    renderSimulator(); // Re-render to create the before/after effect
+    renderSimulator();
   } else {
-    // Remove clip and re-render normally
     document.getElementById('simCanvas').style.clipPath = '';
     renderSimulator();
   }

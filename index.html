@@ -163,11 +163,7 @@
     justify-content: center;
     min-height: 250px;
   }
-  .sim-canvas-wrapper { position: relative; }
-  .canvas-stack { position: relative; display: inline-block; }
-  .canvas-stack canvas { display: block; max-width: 100%; max-height: 100%; }
-  #simCanvasBefore { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-  #simCanvas { position: relative; z-index: 1; }
+  .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; }
 
   .tint-label-overlay {
     position: absolute;
@@ -636,10 +632,7 @@
       </div>
       <div class="sim-vehicle-name" id="simVehicleName"></div>
       <div class="sim-canvas-wrapper" id="simCanvasWrapper">
-        <div class="canvas-stack" id="canvasStack">
-          <canvas id="simCanvasBefore"></canvas>
-          <canvas id="simCanvas"></canvas>
-        </div>
+        <canvas id="simCanvas"></canvas>
         <!-- Before/After Slider -->
         <div class="ba-slider-container" id="baSlider">
           <div class="ba-label before">Before</div>
@@ -1299,18 +1292,15 @@ function renderSimulator() {
     applyZoneTint(ctx, masks.rear, masks.w, masks.h, cr, cg, cb, appState.rearVLT);
   }
 
-  // Before/after: draw untinted version on canvas behind the tinted one
-  const beforeCanvas = document.getElementById('simCanvasBefore');
+  // Before/after: if active, overdraw the left portion with untinted image
   if (baState.active) {
-    beforeCanvas.width = canvas.width;
-    beforeCanvas.height = canvas.height;
-    beforeCanvas.style.display = 'block';
-    const bCtx = beforeCanvas.getContext('2d');
-    bCtx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
-    updateSliderPosition();
-  } else {
-    beforeCanvas.style.display = 'none';
-    canvas.style.clipPath = '';
+    const splitX = Math.round(canvas.width * baState.position);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, splitX, canvas.height);
+    ctx.clip();
+    ctx.drawImage(appState.vehicleImage, b.x, b.y, b.width, b.height, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
   }
 }
 
@@ -1357,11 +1347,11 @@ function updateSliderPosition() {
   const x = baState.position * rect.width;
   document.getElementById('baLine').style.left = x + 'px';
   document.getElementById('baHandle').style.left = x + 'px';
+}
 
-  // Clip the tinted canvas to show only the right portion (tinted)
-  // Left side will show the untinted version drawn underneath
-  const pct = baState.position * 100;
-  document.getElementById('simCanvas').style.clipPath = 'inset(0 0 0 ' + pct + '%)';
+function updateSliderAndRender() {
+  updateSliderPosition();
+  renderSimulator();
 }
 
 (function initBASlider() {
@@ -1379,13 +1369,13 @@ function updateSliderPosition() {
     e.preventDefault();
     baState.dragging = true;
     baState.position = getPos(e);
-    updateSliderPosition();
+    updateSliderAndRender();
   }
   function onMove(e) {
     if (!baState.dragging) return;
     e.preventDefault();
     baState.position = getPos(e);
-    updateSliderPosition();
+    updateSliderAndRender();
   }
   function onEnd() { baState.dragging = false; }
 

@@ -162,9 +162,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 400px;
+    min-height: 250px;
   }
-  .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; }
+  .sim-canvas-wrapper canvas { max-width: 100%; max-height: 100%; display: block; }
 
   .tint-label-overlay {
     position: absolute;
@@ -460,7 +460,8 @@
   body.embed-mode .vehicle-card .info .cat { color: #888; }
 
   /* Simulator view in embed */
-  body.embed-mode .sim-preview { background: #f0f0f2; }
+  body.embed-mode .sim-preview { background: #f0f0f2; padding: 12px; }
+  body.embed-mode .sim-canvas-wrapper { min-height: auto; align-items: flex-start; }
   body.embed-mode .sim-back-btn { color: #555; border-color: #ccc; }
   body.embed-mode .sim-back-btn:hover { color: #222; border-color: #999; }
   body.embed-mode .sim-vehicle-name { color: #222; }
